@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Para ti 🌼</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Fraunces:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--noche:#13301f;--hoja:#1f4a30;--sol:#f7c914;--miel:#e3a600;--petalo:#fff1b8}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:radial-gradient(circle at 50% 0%,var(--hoja),var(--noche) 70%);color:var(--petalo);font-family:'Fraunces',Georgia,serif;overflow-x:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#petalos{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.p{position:absolute;top:-30px;width:14px;height:22px;background:var(--sol);border-radius:70% 0 70% 0;opacity:.85;animation:cae linear infinite}
+@keyframes cae{to{transform:translateY(110vh) rotate(540deg)}}
+main{position:relative;max-width:32rem;margin:0 auto;padding:2rem 1.5rem 4rem;min-height:100%;display:flex;flex-direction:column;align-items:center;text-align:center}
+#inicio{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:1.4rem}
+.flor{font-size:5rem;animation:mece 3s ease-in-out infinite}
+@keyframes mece{50%{transform:rotate(8deg) scale(1.06)}}
+h1{font-family:'Caveat',cursive;font-size:3rem;color:var(--sol);line-height:1.1}
+#inicio p{font-size:1.1rem;opacity:.9}
+button{font:inherit;font-size:1.15rem;background:var(--sol);color:var(--noche);border:0;border-radius:999px;padding:.9rem 2rem;cursor:pointer;font-weight:400}
+button:focus-visible{outline:3px solid var(--petalo);outline-offset:3px}
+#carta{display:none;width:100%;padding-top:2rem}
+#carta h2{font-family:'Caveat',cursive;font-size:2.4rem;color:var(--sol);margin-bottom:1.5rem}
+.l{font-size:1.25rem;line-height:1.7;font-style:italic;margin-bottom:1.1rem;opacity:0;transform:translateY(8px);transition:opacity 1s,transform 1s}
+.l.v{opacity:1;transform:none}
+#firma{font-family:'Caveat',cursive;font-size:2rem;color:var(--sol);margin-top:1.5rem;opacity:0;transition:opacity 1.5s}
+#firma.v{opacity:1}
+#otra{display:none;margin-top:2rem;background:transparent;color:var(--petalo);border:1px solid var(--petalo);font-size:1rem;padding:.6rem 1.4rem}
+@media (prefers-reduced-motion:reduce){.p,.flor{animation:none}}
+</style>
+</head>
+<body>
+<div id="petalos" aria-hidden="true"></div>
+<main>
+  <section id="inicio">
+    <div class="flor">🌻</div>
+    <h1 id="titulo"></h1>
+    <p>Hice esto pensando en ti.<br>Sube el volumen y toca el botón.</p>
+    <button id="abrir">Abrir mi regalo</button>
+  </section>
+  <section id="carta">
+    <h2 id="saludo"></h2>
+    <div id="lineas"></div>
+    <p id="firma"></p>
+    <button id="otra">Escuchar otra vez</button>
+  </section>
+</main>
+<script>
+/* ====== EDITA SOLO ESTO ====== */
+const NOMBRE = "Alexa";
+const TU_NOMBRE = "Anthony";
+const MENSAJE = [
+  "Aunque no te regalé rosas de verdad, quise hacerte algo con mucho cariño.",
+  "Y sí, esto no llegó a tiempo. El día de las flores amarillas ya pasó.",
+  "Pero eso no cambia nada: sigues siendo una persona muy especial para mí.",
+  "Tú eres como esas flores amarillas: llegas y todo a tu alrededor se ilumina.",
+  "Gracias por estar, por escucharme y por hacerme reír hasta cuando no hay nada gracioso.",
+  "Ojalá nunca olvides lo mucho que vales, y lo feliz que soy de tenerte en mi vida.",
+  "Feliz día de las flores amarillas, aunque sea tarde. Te quiero muchísimo."
+];
+/* ============================= */
+
+document.getElementById('titulo').textContent = "Para ti, " + NOMBRE;
+document.getElementById('saludo').textContent = "Querida " + NOMBRE + ",";
+document.getElementById('firma').textContent = "Con todo mi cariño, " + TU_NOMBRE + " 🌼";
+document.title = "Para ti, " + NOMBRE + " 🌼";
+
+// Pétalos
+const cont = document.getElementById('petalos');
+if (!matchMedia('(prefers-reduced-motion:reduce)').matches) {
+  for (let i = 0; i < 22; i++) {
+    const p = document.createElement('div');
+    p.className = 'p';
+    p.style.left = Math.random()*100 + 'vw';
+    p.style.animationDuration = (7 + Math.random()*8) + 's';
+    p.style.animationDelay = (-Math.random()*12) + 's';
+    p.style.transform = 'scale(' + (0.6 + Math.random()*0.9) + ')';
+    cont.appendChild(p);
+  }
+}
+
+// Voz
+let voz = null;
+function elegirVoz() {
+  const vs = speechSynthesis.getVoices();
+  voz = vs.find(v => /^es[-_](MX|US|419)/i.test(v.lang) && /female|paulina|sabina|google/i.test(v.name))
+     || vs.find(v => /^es/i.test(v.lang)) || null;
+}
+if ('speechSynthesis' in window) { elegirVoz(); speechSynthesis.onvoiceschanged = elegirVoz; }
+
+const lineas = document.getElementById('lineas');
+const firma = document.getElementById('firma');
+const otra = document.getElementById('otra');
+let sesion = 0;
+
+function hablar(texto, fin) {
+  if (!('speechSynthesis' in window)) { setTimeout(fin, 3500); return; }
+  const u = new SpeechSynthesisUtterance(texto);
+  u.lang = 'es-MX'; if (voz) u.voice = voz;
+  u.rate = 0.88; u.pitch = 1.05;
+  u.onend = fin; u.onerror = fin;
+  speechSynthesis.speak(u);
+}
+
+function leer() {
+  const mi = ++sesion;
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  lineas.innerHTML = ''; firma.classList.remove('v'); otra.style.display = 'none';
+  const els = MENSAJE.map(t => { const d = document.createElement('p'); d.className = 'l'; d.textContent = t; lineas.appendChild(d); return d; });
+  let i = 0;
+  (function sig() {
+    if (mi !== sesion) return;
+    if (i >= els.length) {
+      firma.classList.add('v');
+      hablar("Con todo mi cariño, " + TU_NOMBRE, () => { if (mi === sesion) otra.style.display = 'inline-block'; });
+      return;
+    }
+    const el = els[i], t = MENSAJE[i]; i++;
+    el.classList.add('v');
+    el.scrollIntoView({behavior:'smooth', block:'center'});
+    hablar(t, () => setTimeout(sig, 500));
+  })();
+}
+
+document.getElementById('abrir').onclick = () => {
+  document.getElementById('inicio').style.display = 'none';
+  document.getElementById('carta').style.display = 'block';
+  const s = document.getElementById('saludo').textContent;
+  hablar(s, leer); // el primer toque desbloquea el audio
+};
+otra.onclick = leer;
+</script>
+</body>
+</html>
