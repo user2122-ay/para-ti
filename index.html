@@ -29,6 +29,13 @@ button:focus-visible{outline:3px solid var(--petalo);outline-offset:3px}
 #firma{font-family:'Caveat',cursive;font-size:2rem;color:var(--sol);margin-top:1.5rem;opacity:0;transition:opacity 1.5s}
 #firma.v{opacity:1}
 #otra{display:none;margin-top:2rem;background:transparent;color:var(--petalo);border:1px solid var(--petalo);font-size:1rem;padding:.6rem 1.4rem}
+#buzon{display:none;margin-top:2.5rem;width:100%}
+#buzon h3{font-family:'Caveat',cursive;font-size:2rem;color:var(--sol);font-weight:600}
+#buzon p.sub{margin:.3rem 0 1rem;opacity:.85}
+#nota{margin-top:1.2rem;padding:1.2rem;border:1px dashed var(--sol);border-radius:14px;font-style:italic;font-size:1.2rem;line-height:1.6;opacity:0}
+#nota:empty{display:none}
+#nota.v{opacity:1;animation:sale .6s ease-out}
+@keyframes sale{from{opacity:0;transform:translateY(14px) scale(.96)}}
 @media (prefers-reduced-motion:reduce){.p,.flor{animation:none}}
 </style>
 </head>
@@ -46,6 +53,12 @@ button:focus-visible{outline:3px solid var(--petalo);outline-offset:3px}
     <div id="lineas"></div>
     <p id="firma"></p>
     <button id="otra">Escuchar otra vez</button>
+    <div id="buzon">
+      <h3>Buzón de cositas bonitas 💌</h3>
+      <p class="sub">Toca el sobre cada vez que necesites ánimo.</p>
+      <button id="sobre">Abrir un sobre</button>
+      <p id="nota" aria-live="polite"></p>
+    </div>
   </section>
 </main>
 <script>
@@ -60,6 +73,25 @@ const MENSAJE = [
   "Gracias por estar, por escucharme y por hacerme reír hasta cuando no hay nada gracioso.",
   "Ojalá nunca olvides lo mucho que vales, y lo feliz que soy de tenerte en mi vida.",
   "Feliz día de las flores amarillas, aunque sea tarde. Te quiero muchísimo."
+];
+// Si grabas tu voz, sube el archivo a GitHub y pon aquí su nombre, ej: "voz.mp3". Si lo dejas vacío, usa la voz del celular.
+const AUDIO = "";
+const FRASES = [
+  "Eres más fuerte de lo que crees, Alexa.",
+  "Hoy no tienes que ser perfecta. Con ser tú ya es suficiente.",
+  "Tu sonrisa le cambia el día a la gente, incluido el mío.",
+  "Lo estás haciendo mejor de lo que piensas.",
+  "Si hoy es un día difícil, recuerda que yo estoy de tu lado.",
+  "Mereces cosas bonitas, y te van a llegar.",
+  "Tu forma de ser hace que todo se sienta más liviano.",
+  "Descansar también es avanzar.",
+  "Gracias por ser tan buena amiga. De verdad.",
+  "Todo lo que te preocupa hoy va a pasar. Tú sigues aquí, brillando.",
+  "Tienes un corazón hermoso, no dejes que nadie te haga dudar de eso.",
+  "Cada vez que te ríes, el mundo se ve mejor.",
+  "Eres de esas personas que uno quiere tener toda la vida.",
+  "Respira hondo. Tú puedes con esto y con más.",
+  "Me siento muy afortunado de tenerte como amiga."
 ];
 /* ============================= */
 
@@ -86,21 +118,58 @@ if (!matchMedia('(prefers-reduced-motion:reduce)').matches) {
 let voz = null;
 function elegirVoz() {
   const vs = speechSynthesis.getVoices();
-  voz = vs.find(v => /^es[-_](MX|US|419)/i.test(v.lang) && /female|paulina|sabina|google/i.test(v.name))
-     || vs.find(v => /^es/i.test(v.lang)) || null;
+  const es = vs.filter(v => /^es/i.test(v.lang));
+  voz = es.find(v => /natural|neural|online/i.test(v.name))
+     || es.find(v => /google/i.test(v.name))
+     || es.find(v => /paulina|sabina|monica|mónica|helena|luciana|female/i.test(v.name))
+     || es[0] || null;
 }
 if ('speechSynthesis' in window) { elegirVoz(); speechSynthesis.onvoiceschanged = elegirVoz; }
 
 const lineas = document.getElementById('lineas');
 const firma = document.getElementById('firma');
 const otra = document.getElementById('otra');
-let sesion = 0;
+let sesion = 0, audio = null;
+const buzon = document.getElementById('buzon');
+const sobre = document.getElementById('sobre');
+const nota = document.getElementById('nota');
+let cola = [];
+
+function fin() {
+  otra.style.display = 'inline-block';
+  buzon.style.display = 'block';
+}
+
+function modoAudio(mi, els) {
+  audio = new Audio(AUDIO);
+  const poner = () => {
+    const d = isFinite(audio.duration) && audio.duration > 0 ? audio.duration : els.length * 6;
+    const paso = d / (els.length + 1);
+    els.forEach((el, k) => setTimeout(() => {
+      if (mi !== sesion) return;
+      el.classList.add('v');
+      el.scrollIntoView({behavior: 'smooth', block: 'center'});
+    }, k * paso * 1000));
+  };
+  audio.addEventListener('loadedmetadata', poner, {once: true});
+  audio.onended = () => { if (mi === sesion) { firma.classList.add('v'); fin(); } };
+  audio.play().catch(() => {});
+}
+
+sobre.onclick = () => {
+  if (!cola.length) cola = FRASES.map((_, i) => i).sort(() => Math.random() - 0.5);
+  nota.classList.remove('v');
+  void nota.offsetWidth;
+  nota.textContent = FRASES[cola.pop()];
+  nota.classList.add('v');
+  nota.scrollIntoView({behavior: 'smooth', block: 'center'});
+};
 
 function hablar(texto, fin) {
   if (!('speechSynthesis' in window)) { setTimeout(fin, 3500); return; }
   const u = new SpeechSynthesisUtterance(texto);
   u.lang = 'es-MX'; if (voz) u.voice = voz;
-  u.rate = 0.88; u.pitch = 1.05;
+  u.rate = 0.93; u.pitch = 1.1;
   u.onend = fin; u.onerror = fin;
   speechSynthesis.speak(u);
 }
@@ -110,12 +179,15 @@ function leer() {
   if ('speechSynthesis' in window) speechSynthesis.cancel();
   lineas.innerHTML = ''; firma.classList.remove('v'); otra.style.display = 'none';
   const els = MENSAJE.map(t => { const d = document.createElement('p'); d.className = 'l'; d.textContent = t; lineas.appendChild(d); return d; });
+  buzon.style.display = 'none';
+  if (audio) audio.pause();
+  if (AUDIO) { modoAudio(mi, els); return; }
   let i = 0;
   (function sig() {
     if (mi !== sesion) return;
     if (i >= els.length) {
       firma.classList.add('v');
-      hablar("Con todo mi cariño, " + TU_NOMBRE, () => { if (mi === sesion) otra.style.display = 'inline-block'; });
+      hablar("Con todo mi cariño, " + TU_NOMBRE, () => { if (mi === sesion) fin(); });
       return;
     }
     const el = els[i], t = MENSAJE[i]; i++;
@@ -129,9 +201,10 @@ document.getElementById('abrir').onclick = () => {
   document.getElementById('inicio').style.display = 'none';
   document.getElementById('carta').style.display = 'block';
   const s = document.getElementById('saludo').textContent;
-  hablar(s, leer); // el primer toque desbloquea el audio
+  if (AUDIO) leer(); else hablar(s, leer); // el primer toque desbloquea el audio
 };
 otra.onclick = leer;
 </script>
 </body>
 </html>
+
