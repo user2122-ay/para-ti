@@ -12,11 +12,23 @@
 html,body{height:100%}
 body{background:radial-gradient(circle at 50% 0%,var(--hoja),var(--noche) 70%);color:var(--petalo);font-family:'Fraunces',Georgia,serif;overflow-x:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
 #petalos{position:fixed;inset:0;pointer-events:none;overflow:hidden}
-.p{position:absolute;top:-30px;width:14px;height:22px;background:var(--sol);border-radius:70% 0 70% 0;opacity:.85;animation:cae linear infinite}
+.p{position:absolute;top:-40px;opacity:.95;background-repeat:no-repeat;background-size:contain;animation:cae linear infinite}
 @keyframes cae{to{transform:translateY(110vh) rotate(540deg)}}
 main{position:relative;max-width:32rem;margin:0 auto;padding:2rem 1.5rem 4rem;min-height:100%;display:flex;flex-direction:column;align-items:center;text-align:center}
 #inicio{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:1.4rem}
-.flor{font-size:5rem;animation:mece 3s ease-in-out infinite}
+.flor{font-size:5rem}
+#escena{width:100%;height:170px;display:flex;justify-content:center;align-items:flex-end;font-size:4.5rem;overflow:hidden}
+#grupo{display:flex;align-items:flex-end;animation:llega 2.8s ease-out both}
+@keyframes llega{from{transform:translateX(70vw)}to{transform:none}}
+#persona{display:inline-block;animation:bob .45s ease-in-out 6}
+@keyframes bob{50%{transform:translateY(-12px)}}
+#ramo{display:inline-block;transition:transform 1.4s ease-in-out,filter 1.4s}
+#escena.entrega #ramo{transform:translate(-2.4rem,-2.2rem) scale(1.7);filter:drop-shadow(0 0 20px var(--sol))}
+#escena.entrega #persona{opacity:0;transition:opacity 1s}
+#abrir{opacity:0;pointer-events:none;transition:opacity 1s}
+#abrir.ok{opacity:1;pointer-events:auto}
+#ramo svg{width:5rem;height:auto;display:block}
+#ramoFin svg{width:4.5rem;height:auto;display:block;margin:0 auto}
 @keyframes mece{50%{transform:rotate(8deg) scale(1.06)}}
 h1{font-family:'Caveat',cursive;font-size:3rem;color:var(--sol);line-height:1.1}
 #inicio p{font-size:1.1rem;opacity:.9}
@@ -36,19 +48,20 @@ button:focus-visible{outline:3px solid var(--petalo);outline-offset:3px}
 #nota:empty{display:none}
 #nota.v{opacity:1;animation:sale .6s ease-out}
 @keyframes sale{from{opacity:0;transform:translateY(14px) scale(.96)}}
-@media (prefers-reduced-motion:reduce){.p,.flor{animation:none}}
+@media (prefers-reduced-motion:reduce){.p,#grupo,#persona{animation:none}}
 </style>
 </head>
 <body>
 <div id="petalos" aria-hidden="true"></div>
 <main>
   <section id="inicio">
-    <div class="flor">🌻</div>
+    <div id="escena"><div id="grupo"><span id="persona">🧍</span><span id="ramo"></span></div></div>
     <h1 id="titulo"></h1>
-    <p>Hice esto pensando en ti.<br>Sube el volumen y toca el botón.</p>
-    <button id="abrir">Abrir mi regalo</button>
+    <p>Alguien viene en camino con algo para ti…<br>Sube el volumen.</p>
+    <button id="abrir">Recibir mi ramo</button>
   </section>
   <section id="carta">
+    <div id="ramoFin"></div>
     <h2 id="saludo"></h2>
     <div id="lineas"></div>
     <p id="firma"></p>
@@ -100,7 +113,14 @@ document.getElementById('saludo').textContent = "Querida " + NOMBRE + ",";
 document.getElementById('firma').textContent = "Con todo mi cariño, " + TU_NOMBRE + " 🌼";
 document.title = "Para ti, " + NOMBRE + " 🌼";
 
-// Pétalos
+// Rosas amarillas dibujadas (SVG)
+const ROSA = (x, y, k) => `<g transform="translate(${x} ${y}) scale(${k})"><circle r="17" fill="#f7c914"/><path d="M0 -14c8 0 14 6 14 14 0 4-2 7-5 9-3 2-7 3-9 1-3-2-3-6 0-8 2-1 5 0 5 3" fill="none" stroke="#c98f00" stroke-width="1.6" stroke-linecap="round"/><circle r="5" fill="#ffe36a"/></g>`;
+const RAMO = `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="28" cy="48" rx="9" ry="22" transform="rotate(-40 28 48)" fill="#2f7a46"/><ellipse cx="92" cy="48" rx="9" ry="22" transform="rotate(40 92 48)" fill="#2f7a46"/>${ROSA(38,42,1)}${ROSA(82,42,1)}${ROSA(60,28,1.1)}${ROSA(60,60,1)}<path d="M18 62L102 62L66 134Q60 140 54 134Z" fill="#fff1b8"/><path d="M40 82L80 82" stroke="#e3a600" stroke-width="5" stroke-linecap="round"/></svg>`;
+const ROSA_URI = 'data:image/svg+xml,' + encodeURIComponent(`<svg viewBox="-18 -18 36 36" xmlns="http://www.w3.org/2000/svg">${ROSA(0,0,1)}</svg>`);
+document.getElementById('ramo').innerHTML = RAMO;
+document.getElementById('ramoFin').innerHTML = RAMO;
+
+// Rosas que caen
 const cont = document.getElementById('petalos');
 if (!matchMedia('(prefers-reduced-motion:reduce)').matches) {
   for (let i = 0; i < 22; i++) {
@@ -109,7 +129,7 @@ if (!matchMedia('(prefers-reduced-motion:reduce)').matches) {
     p.style.left = Math.random()*100 + 'vw';
     p.style.animationDuration = (7 + Math.random()*8) + 's';
     p.style.animationDelay = (-Math.random()*12) + 's';
-    p.style.transform = 'scale(' + (0.6 + Math.random()*0.9) + ')';
+    const t = (18 + Math.random()*18) + 'px'; p.style.width = t; p.style.height = t; p.style.backgroundImage = 'url("' + ROSA_URI + '")';
     cont.appendChild(p);
   }
 }
@@ -198,11 +218,16 @@ function leer() {
 }
 
 document.getElementById('abrir').onclick = () => {
-  document.getElementById('inicio').style.display = 'none';
-  document.getElementById('carta').style.display = 'block';
-  const s = document.getElementById('saludo').textContent;
-  if (AUDIO) leer(); else hablar(s, leer); // el primer toque desbloquea el audio
+  document.getElementById('abrir').disabled = true;
+  document.getElementById('escena').classList.add('entrega');
+  setTimeout(() => {
+    document.getElementById('inicio').style.display = 'none';
+    document.getElementById('carta').style.display = 'block';
+  }, 1700);
+  // el toque desbloquea el audio: la voz empieza mientras te entrega el ramo
+  if (AUDIO) leer(); else hablar("Esto es para ti, " + NOMBRE, () => setTimeout(leer, 300));
 };
+setTimeout(() => document.getElementById('abrir').classList.add('ok'), 2800);
 otra.onclick = leer;
 </script>
 </body>
