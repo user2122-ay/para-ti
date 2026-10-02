@@ -7,22 +7,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Fraunces:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
 <style>
-:root{--noche:#13301f;--hoja:#1f4a30;--sol:#f7c914;--miel:#e3a600;--petalo:#fff1b8}
+:root{--noche:#070b1e;--hoja:#1a1c4a;--sol:#f7c914;--miel:#e3a600;--petalo:#fff1b8}
 *{box-sizing:border-box;margin:0}
 html,body{height:100%}
-body{background:radial-gradient(circle at 50% 0%,var(--hoja),var(--noche) 70%);color:var(--petalo);font-family:'Fraunces',Georgia,serif;overflow-x:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-#petalos{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+body{background:radial-gradient(ellipse at 15% 8%,#2d2166 0%,transparent 55%),radial-gradient(ellipse at 85% 75%,#10404f 0%,transparent 55%),var(--noche);background-attachment:fixed;color:var(--petalo);font-family:'Fraunces',Georgia,serif;overflow-x:hidden;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+#cielo{position:fixed;inset:0;width:100%;height:100%;z-index:0}
+#petalos{z-index:1;position:fixed;inset:0;pointer-events:none;overflow:hidden}
 .p{position:absolute;top:-40px;opacity:.95;background-repeat:no-repeat;background-size:contain;animation:cae linear infinite}
 @keyframes cae{to{transform:translateY(110vh) rotate(540deg)}}
-main{position:relative;max-width:32rem;margin:0 auto;padding:2rem 1.5rem 4rem;min-height:100%;display:flex;flex-direction:column;align-items:center;text-align:center}
-#inicio{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:1.4rem}
+main{position:relative;z-index:2;max-width:32rem;margin:0 auto;padding:2rem 1.5rem 4rem;min-height:100%;display:flex;flex-direction:column;align-items:center;text-align:center}
+#inicio{margin:auto 0;padding-top:11rem;display:flex;flex-direction:column;align-items:center;gap:1.4rem}
 .flor{font-size:5rem}
-#escena{width:100%;height:170px;display:flex;justify-content:center;align-items:flex-end;font-size:4.5rem;overflow:hidden}
+#escena{width:100%;height:13.5rem;display:flex;justify-content:center;align-items:flex-end;overflow:hidden}
 #grupo{display:flex;align-items:flex-end;animation:llega 2.8s ease-out both}
 @keyframes llega{from{transform:translateX(70vw)}to{transform:none}}
-#persona{display:inline-block;animation:bob .45s ease-in-out 6}
-@keyframes bob{50%{transform:translateY(-12px)}}
-#ramo{display:inline-block;transition:transform 1.4s ease-in-out,filter 1.4s}
+#persona{display:block;animation:bob .5s ease-in-out 6}
+#persona svg{height:12rem;width:auto;display:block}
+.leg{transform-box:view-box;animation:paso .5s ease-in-out 6 alternate}
+.leg.r{animation-direction:alternate-reverse}
+@keyframes paso{from{transform:rotate(-20deg)}to{transform:rotate(20deg)}}
+@keyframes bob{50%{transform:translateY(-5px)}}
+#ramo{display:block;margin-left:-3.9rem;margin-bottom:6rem;transition:transform 1.4s ease-in-out,filter 1.4s}
 #escena.entrega #ramo{transform:translate(-2.4rem,-2.2rem) scale(1.7);filter:drop-shadow(0 0 20px var(--sol))}
 #escena.entrega #persona{opacity:0;transition:opacity 1s}
 #abrir{opacity:0;pointer-events:none;transition:opacity 1s}
@@ -48,14 +53,15 @@ button:focus-visible{outline:3px solid var(--petalo);outline-offset:3px}
 #nota:empty{display:none}
 #nota.v{opacity:1;animation:sale .6s ease-out}
 @keyframes sale{from{opacity:0;transform:translateY(14px) scale(.96)}}
-@media (prefers-reduced-motion:reduce){.p,#grupo,#persona{animation:none}}
+@media (prefers-reduced-motion:reduce){.p,#grupo,#persona,.leg{animation:none}}
 </style>
 </head>
 <body>
+<canvas id="cielo"></canvas>
 <div id="petalos" aria-hidden="true"></div>
 <main>
   <section id="inicio">
-    <div id="escena"><div id="grupo"><span id="persona">🧍</span><span id="ramo"></span></div></div>
+    <div id="escena"><div id="grupo"><span id="persona"></span><span id="ramo"></span></div></div>
     <h1 id="titulo"></h1>
     <p>Alguien viene en camino con algo para ti…<br>Sube el volumen.</p>
     <button id="abrir">Recibir mi ramo</button>
@@ -108,22 +114,64 @@ const FRASES = [
 ];
 /* ============================= */
 
-document.getElementById('titulo').textContent = "Para ti, " + NOMBRE;
+document.getElementById('titulo').textContent = "Para ti";
 document.getElementById('saludo').textContent = "Querida " + NOMBRE + ",";
 document.getElementById('firma').textContent = "Con todo mi cariño, " + TU_NOMBRE + " 🌼";
 document.title = "Para ti, " + NOMBRE + " 🌼";
 
 // Rosas amarillas dibujadas (SVG)
-const ROSA = (x, y, k) => `<g transform="translate(${x} ${y}) scale(${k})"><circle r="17" fill="#f7c914"/><path d="M0 -14c8 0 14 6 14 14 0 4-2 7-5 9-3 2-7 3-9 1-3-2-3-6 0-8 2-1 5 0 5 3" fill="none" stroke="#c98f00" stroke-width="1.6" stroke-linecap="round"/><circle r="5" fill="#ffe36a"/></g>`;
-const RAMO = `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="28" cy="48" rx="9" ry="22" transform="rotate(-40 28 48)" fill="#2f7a46"/><ellipse cx="92" cy="48" rx="9" ry="22" transform="rotate(40 92 48)" fill="#2f7a46"/>${ROSA(38,42,1)}${ROSA(82,42,1)}${ROSA(60,28,1.1)}${ROSA(60,60,1)}<path d="M18 62L102 62L66 134Q60 140 54 134Z" fill="#fff1b8"/><path d="M40 82L80 82" stroke="#e3a600" stroke-width="5" stroke-linecap="round"/></svg>`;
+let gid = 0;
+const ROSA = (x, y, k) => { const id = 'g' + (gid++); return `<g transform="translate(${x} ${y}) scale(${k})"><defs><radialGradient id="${id}" cx=".4" cy=".35"><stop offset="0" stop-color="#fff3a8"/><stop offset=".55" stop-color="#f7c914"/><stop offset="1" stop-color="#d49500"/></radialGradient></defs><circle r="17" fill="url(#${id})"/><path d="M-15 -4c3-9 12-13 20-10 7 3 11 10 9 17" stroke="#b07a00" fill="none" stroke-width="1.2" opacity=".75"/><path d="M-12 6c-2-8 3-15 11-16 8-1 13 5 12 11-1 6-7 9-12 8-5-1-7-5-5-8 2-3 6-3 7 0" stroke="#b07a00" fill="none" stroke-width="1.3"/><path d="M-6 2c0-4 4-6 7-4 3 2 2 6-1 7" fill="#ffe97a" stroke="#c48a00" stroke-width="1"/><ellipse cx="-6" cy="-9" rx="6" ry="3" fill="#fff" opacity=".3" transform="rotate(-25 -6 -9)"/></g>`; };
+const RAMO = `<svg viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="26" cy="50" rx="9" ry="23" transform="rotate(-42 26 50)" fill="#2f7a46"/><ellipse cx="94" cy="50" rx="9" ry="23" transform="rotate(42 94 50)" fill="#2f7a46"/><ellipse cx="60" cy="22" rx="7" ry="16" fill="#3a8a52"/>${ROSA(36,44,1)}${ROSA(84,44,1)}${ROSA(60,30,1.1)}${ROSA(60,62,1)}<path d="M16 64L104 64L66 134Q60 141 54 134Z" fill="#fff1c9"/><path d="M16 64L104 64L98 74L22 74Z" fill="#f0dca0"/><path d="M42 90L78 90" stroke="#e3a600" stroke-width="5" stroke-linecap="round"/></svg>`;
 const ROSA_URI = 'data:image/svg+xml,' + encodeURIComponent(`<svg viewBox="-18 -18 36 36" xmlns="http://www.w3.org/2000/svg">${ROSA(0,0,1)}</svg>`);
+const PERSONA = `<svg viewBox="0 0 100 190" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><ellipse cx="50" cy="184" rx="28" ry="4" fill="#000" opacity=".3"/><g class="leg l" style="transform-origin:50px 108px"><rect x="40" y="108" width="10" height="68" rx="5" fill="#26324d"/><path d="M36 175h17a3 3 0 0 1 0 7H34a2 2 0 0 1 2-7z" fill="#15151f"/></g><g class="leg r" style="transform-origin:50px 108px"><rect x="51" y="108" width="10" height="68" rx="5" fill="#33436a"/><path d="M47 175h17a3 3 0 0 1 0 7H45a2 2 0 0 1 2-7z" fill="#15151f"/></g><path d="M32 64q0-11 13-11h10q13 0 13 11v50H32z" fill="#2f7a5c"/><path d="M32 100h36v14H32z" fill="#27684d"/><rect x="45" y="46" width="10" height="11" rx="4" fill="#e3b088"/><path d="M33 38c-4 16-2 30 3 36l4-4c-3-9-3-20-1-30z" fill="#3a2418"/><circle cx="50" cy="34" r="16" fill="#f0c6a0"/><path d="M33 33c-1-17 12-22 22-20 11 2 14 12 12 24-1-10-5-14-12-14-8 0-16 2-22 10z" fill="#3a2418"/><circle cx="44" cy="37" r="1.7" fill="#2a1a12"/><circle cx="56" cy="37" r="1.7" fill="#2a1a12"/><path d="M45 44q5 4 10 0" stroke="#a5503c" stroke-width="1.6" fill="none" stroke-linecap="round"/><circle cx="39.5" cy="42" r="2.8" fill="#f4a08a" opacity=".45"/><circle cx="60.5" cy="42" r="2.8" fill="#f4a08a" opacity=".45"/><path d="M62 66q14 6 16 24" stroke="#2f7a5c" stroke-width="9" fill="none" stroke-linecap="round"/><circle cx="78" cy="91" r="5" fill="#f0c6a0"/></svg>`;
 document.getElementById('ramo').innerHTML = RAMO;
 document.getElementById('ramoFin').innerHTML = RAMO;
+document.getElementById('persona').innerHTML = PERSONA;
+
+// Universo con su nombre hecho de estrellas
+const cv = document.getElementById('cielo'), cx = cv.getContext('2d');
+let W, H, bg = [], nm = [], nombreA = 1, t0 = performance.now();
+function crear() {
+  W = cv.width = innerWidth; H = cv.height = innerHeight;
+  bg = Array.from({length: Math.round(W*H/5000)}, () => ({x: Math.random()*W, y: Math.random()*H, r: Math.random()*1.3 + .3, f: Math.random()*6.3, v: .6 + Math.random()*1.6}));
+  const o = document.createElement('canvas'); o.width = W; o.height = 240;
+  const c = o.getContext('2d'), fs = Math.min(W*0.3, 130);
+  c.font = '600 ' + fs + 'px Caveat, cursive'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillStyle = '#fff';
+  c.fillText(NOMBRE, W/2, 120);
+  const d = c.getImageData(0, 0, W, 240).data; nm = [];
+  for (let y = 0; y < 240; y += 4) for (let x = 0; x < W; x += 4) if (d[(y*W + x)*4 + 3] > 140) nm.push({tx: x, ty: y + 30, x: Math.random()*W, y: Math.random()*H, f: Math.random()*6.3});
+  t0 = performance.now();
+}
+function dibujar(now) {
+  cx.clearRect(0, 0, W, H);
+  const s = (now - t0)/1000;
+  cx.fillStyle = '#fff';
+  for (const e of bg) { cx.globalAlpha = .35 + .65*Math.abs(Math.sin(e.f + s*e.v)); cx.beginPath(); cx.arc(e.x, e.y, e.r, 0, 6.3); cx.fill(); }
+  const k = Math.min(1, Math.max(0, (s - .4)/3)), ease = 1 - Math.pow(1 - k, 3);
+  cx.fillStyle = '#ffe36a';
+  for (const e of nm) {
+    const x = e.x + (e.tx - e.x)*ease, y = e.y + (e.ty - e.y)*ease, a = (.6 + .4*Math.sin(e.f + s*2))*nombreA;
+    cx.globalAlpha = a; cx.beginPath(); cx.arc(x, y, 1.5, 0, 6.3); cx.fill();
+    cx.globalAlpha = a*.22; cx.beginPath(); cx.arc(x, y, 3.8, 0, 6.3); cx.fill();
+  }
+  const ph = (s % 7)/7;
+  if (ph < .12) {
+    const q = ph/.12, x = W*.92 - q*W*.5, y = H*.08 + q*H*.25, g = cx.createLinearGradient(x, y, x + 70, y - 40);
+    g.addColorStop(0, 'rgba(255,255,255,' + (1 - q) + ')'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    cx.globalAlpha = 1; cx.strokeStyle = g; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x + 70, y - 40); cx.stroke();
+  }
+  cx.globalAlpha = 1;
+  requestAnimationFrame(dibujar);
+}
+Promise.resolve(document.fonts && document.fonts.load('600 60px Caveat')).catch(() => {}).then(() => { crear(); requestAnimationFrame(dibujar); });
+let w0 = innerWidth;
+addEventListener('resize', () => { if (innerWidth !== w0) { w0 = innerWidth; crear(); } });
 
 // Rosas que caen
 const cont = document.getElementById('petalos');
 if (!matchMedia('(prefers-reduced-motion:reduce)').matches) {
-  for (let i = 0; i < 22; i++) {
+  for (let i = 0; i < 14; i++) {
     const p = document.createElement('div');
     p.className = 'p';
     p.style.left = Math.random()*100 + 'vw';
@@ -222,7 +270,7 @@ document.getElementById('abrir').onclick = () => {
   document.getElementById('escena').classList.add('entrega');
   setTimeout(() => {
     document.getElementById('inicio').style.display = 'none';
-    document.getElementById('carta').style.display = 'block';
+    document.getElementById('carta').style.display = 'block'; nombreA = .25;
   }, 1700);
   // el toque desbloquea el audio: la voz empieza mientras te entrega el ramo
   if (AUDIO) leer(); else hablar("Esto es para ti, " + NOMBRE, () => setTimeout(leer, 300));
